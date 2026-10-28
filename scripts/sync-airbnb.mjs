@@ -1,5 +1,5 @@
-/* Scarica il calendario iCal di Airbnb e scrive date.json con le notti occupate. */
-import { writeFileSync } from 'node:fs';
+/* Scarica il calendario iCal di Airbnb, aggiunge le prenotazioni dirette e scrive date.json con le notti occupate. */
+import { writeFileSync, readFileSync, existsSync } from 'node:fs';
 
 const URLS = (process.env.AIRBNB_ICAL || '').split(/[\s,]+/).filter(Boolean);
 if (!URLS.length) { console.error('Manca il segreto AIRBNB_ICAL'); process.exit(1); }
@@ -21,6 +21,10 @@ for (const url of URLS) {
     for (let d = d1; d < d2; d.setUTCDate(d.getUTCDate() + 1)) notti.add(iso(d));  // DTEND = giorno di check-out, escluso
   }
 }
+
+// Prenotazioni dirette "OB" dal Google Calendar (file aggiornato da Claude ogni settimana)
+const DIRETTE = 'ilmonteoldbridge1/date-dirette.json';
+if (existsSync(DIRETTE)) for (const x of JSON.parse(readFileSync(DIRETTE, 'utf8'))) notti.add(x);
 
 const elenco = [...notti].sort();
 writeFileSync('ilmonteoldbridge1/date.json', JSON.stringify(elenco));
